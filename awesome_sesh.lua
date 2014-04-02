@@ -49,7 +49,7 @@ end
 function save_marked(id, perm)
     local file = assert(io.open(os.getenv("HOME").."/.awesome_saved"..id, "w"))
     local cmd_str = ""
-    local name_str = ""
+    local name_str = "session saved at:"
     for _, v in pairs(awful.client.getmarked()) do 
         local pid = v.pid
         local this_entry = ""
@@ -58,7 +58,7 @@ function save_marked(id, perm)
         for k, v in pairs(tags) do
             tags_str = tags_str..v.name.." "
         end
-        name_str = name_str..v.name.."\n"
+        name_str = name_str.."\n"..v.name
         local linkf = io.popen("ps -p "..pid.." -o args=")
         local this_cmd = linkf:read("*line")
         cmd_str = cmd_str.."\n"..tags_str.."\n"..this_cmd
@@ -68,7 +68,8 @@ function save_marked(id, perm)
                          timeout = 3})
     end
     writeLn(file, name_str)
-    writeLn(file, delim)
+    --no newline after this because cmd_str starts with a newline
+    file:write(delim)
     writeLn(file, cmd_str)
     file:close()
 end
@@ -85,6 +86,9 @@ function restore_sesh(id)
     local move_forward = true
 
     local read_line = file:read("*line")
+    local sesh_info = read_line
+
+    read_line = file:read("*line")
 
     while move_forward do
         local cur_line = read_line
@@ -110,6 +114,7 @@ function restore_sesh(id)
         end
         read_line = file:read("*line")
         prog.cmd = read_line
+        debugNotify({title = "Found:", text = prog.cmd})
         table.insert(new_progs, prog)
         read_line = file:read("*line")
     end
