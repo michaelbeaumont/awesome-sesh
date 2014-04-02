@@ -52,15 +52,16 @@ function save_marked(id, perm)
     local name_str = ""
     for _, v in pairs(awful.client.getmarked()) do 
         local pid = v.pid
+        local this_entry = ""
         local tags = v:tags()
         local tags_str = ""
         for k, v in pairs(tags) do
             tags_str = tags_str..v.name.." "
         end
-        name_str = name_str..v.name
-        local linkf = io.popen("readlink /proc/"..pid.."/exe")
+        name_str = name_str..v.name.."\n"
+        local linkf = io.popen("ps -p "..pid.." -o args=")
         local this_cmd = linkf:read("*line")
-        cmd_str = tags_str.."\n"..this_cmd
+        cmd_str = cmd_str.."\n"..tags_str.."\n"..this_cmd
         naughty.notify({ preset = naughty.config.presets.normal,
                          title = "Saved "..v.name,
                          text = this_cmd,
