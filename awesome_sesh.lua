@@ -1,6 +1,6 @@
 local os = os
 local io = io
-local pairs, assert, tostring, table = pairs, assert, tostring, table
+local pairs, assert, tostring, tonumber, table = pairs, assert, tostring, tonumber, table
 
 local awful = require("awful")
 local naughty = require("naughty")
@@ -10,6 +10,7 @@ module("awesome_sesh")
 local debug = false
 local delim = "7A01770F"--A589A58C054B259543BFB"
 
+-- pread instead of popen
 function debugNotify(notification)
     if debug then
         naughty.notify(notification)
@@ -93,6 +94,8 @@ function restore_sesh(id)
     while move_forward do
         local cur_line = read_line
         local strt_loc, _ = cur_line:find(delim)
+        --this means read_line is at the line after delim
+        --when the loop ends
         read_line = file:read("*line")
         if strt_loc == 1 or read_line == nil then
             move_forward = false
@@ -106,21 +109,36 @@ function restore_sesh(id)
                      timeout = 3})
 
     local new_progs = {}
+
+    local restore_table = awful.rules.rules
+
     while read_line ~= nil do
-        local prog = {}
-        prog.tags = {}
+        debugNotify({text="In command search"})
+        new_tags = {}
+
+        local glob_tags = awful.tag.gettags(1)--p.screen)
+
         for new_tag in read_line:gmatch("%d") do
-            table.insert(prog.tags, new_tag)
+            debugNotify({text="found tag "..tostring(new_tag)})
+            table.insert(new_tags, glob_tags[tonumber(new_tag)])
         end
+
         read_line = file:read("*line")
-        prog.cmd = read_line
-        debugNotify({title = "Found:", text = prog.cmd})
-        table.insert(new_progs, prog)
+        local new_cmd = read_line
+
+        debugNotify({title = "Found:", text = new_cmd})
+
+        local new_pid = awful.util.spawn(new_cmd)
+
+        table.insert(awful.rules.rules, { 
+                rule = { pid = new_pid},
+                callback = function(c)
+                    c:tags(new_tags)
+                end
+            })
         read_line = file:read("*line")
     end
-    for _, p in pairs(new_progs) do
-        debugNotify({title = "Started:", text = p.cmd})
-        awful.util.spawn(p.cmd)
-    end
+
+    awful.rules.rules = restore_table
     
 end
