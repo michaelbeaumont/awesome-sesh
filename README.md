@@ -3,11 +3,12 @@ Awesome Sessions
 
 This program lets you save open groups of windows and reopen them at a later time.
 The idea is to start the program the same way it was started in the first place, any restoring of state within the program should be handled there.
+(for now, we'll see how useful this is without direct support for state)
 
 Installation
 ------------
 
-To use this program, you must call the init function in `rc.lua` and bind a few keys like so:
+To use this program, you must call the init function in `rc.lua` and bind a few keys:
 
 Include the library at the top of the file:
 
@@ -30,18 +31,25 @@ Key to mark window:
 
 Keys for saving and restoring sessions:
 
-    -- Save marked windows as a session
+    
+    -- Use marked windows to save to quick session
     awful.key({ modkey, "Shift", "Control" }, "m", function () 
-        awesome_sesh.save_sesh(1, true)
+        awesome_sesh.save("Quick Session", true)
     end),
 
-    -- Restore saved session
+    -- Restore from quick session
     awful.key({ modkey, "Shift", "Control" }, "r", function () 
-        awesome_sesh.restore_sesh(1)
+        awesome_sesh.restore("Quick Session")
+    end),
+
+    -- List sessions, the widget to show the prompt box should be passed here
+    awful.key({ modkey, "Shift", "Control" }, "l", function () 
+        awesome_sesh.list(mypromptbox[mouse.screen].widget)
     end)
 
 TODO
 ----
 
-* Add support for restoring to the correct tags
-* Add support for multiple sessions
+* Add support for saving multiple sessions (restoring complete)
+* Save the screen of marked clients
+* Support for multiple tags

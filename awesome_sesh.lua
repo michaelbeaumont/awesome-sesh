@@ -47,8 +47,8 @@ function init(client)
 end
 
 
-function save_marked(id, perm)
-    local file = assert(io.open(os.getenv("HOME").."/.awesome_saved"..id, "w"))
+function save(id, perm)
+    local file = assert(io.open(os.getenv("HOME").."/.awesome_saved/"..id, "w"))
     local cmd_str = ""
     local name_str = "session saved at:"
     for _, v in pairs(awful.client.getmarked()) do 
@@ -75,13 +75,67 @@ function save_marked(id, perm)
     file:close()
 end
 
-function list_saved() 
-    linkf = io.popen("ls "..os.getenv("HOME").."/.awesome_saved")
-    cmd = linkf:read("*line")
+function list(textbox) 
+    local linkf = io.popen("ls -1 "..os.getenv("HOME").."/.awesome_saved")
+    local saved_seshs = linkf:lines()
+    local show_str = ""
+
+    for l in saved_seshs do
+        local cur_sesh_file = assert(io.open(os.getenv("HOME").."/.awesome_saved/"..l, "r"))
+
+        local sesh_info = cur_sesh_file:read("*line")
+        local read_line = cur_sesh_file:read("*line")
+
+        --Loop variables
+        local strt_loc = nil
+        local cur_line
+        local name_str = ""
+        local move_forward = true
+
+        --Iterate through the lines, building our list of progs
+        --until we hit the delimiter
+        while move_forward do
+            cur_line = read_line
+            strt_loc, _ = cur_line:find(delim)
+            --this means read_line is at the line after delim
+            --when the loop ends
+            read_line = cur_sesh_file:read("*line")
+            if strt_loc == 1 or read_line == nil then
+                move_forward = false
+            else
+                name_str = name_str..cur_line.."\n"
+            end
+        end
+
+        --Append this session descr to the notification to be
+        show_str = show_str.."\nSession "..l..":\n"..name_str
+    end
+
+    --Show a notification displaying all saved sessions
+    local list_box = naughty.notify(
+                         { preset = naughty.config.presets.normal,
+                           title = "Saved Sessions:",
+                           text = show_str,
+                         })
+
+    --Callback for our prompt
+    --Destroy the notification and restore the sesh
+    local restore_callback = function (choice) 
+        naughty.destroy(list_box)
+        restore(choice)
+    end
+
+    awful.prompt.run({ prompt = "Choose session: " },
+                       textbox,
+                       restore_callback
+                     )
+                     
 end
 
-function restore_sesh(id)
-    local file = assert(io.open(os.getenv("HOME").."/.awesome_saved"..id, "r"))
+function restore(id)
+
+    --change to if nil error session not found
+    local file = assert(io.open(os.getenv("HOME").."/.awesome_saved/"..id, "r"))
 
     local name_str = ""
     local move_forward = true
@@ -92,21 +146,14 @@ function restore_sesh(id)
     read_line = file:read("*line")
 
     while move_forward do
-        local cur_line = read_line
-        local strt_loc, _ = cur_line:find(delim)
+        local strt_loc, _ = read_line:find(delim)
         --this means read_line is at the line after delim
         --when the loop ends
         read_line = file:read("*line")
         if strt_loc == 1 or read_line == nil then
             move_forward = false
-        else
-            name_str = name_str..cur_line.."\n"
         end
     end
-    naughty.notify({ preset = naughty.config.presets.normal,
-                     title = "Session contains:",
-                     text = name_str,
-                     timeout = 3})
 
     local new_progs = {}
 
@@ -142,3 +189,4 @@ function restore_sesh(id)
     awful.rules.rules = restore_table
     
 end
+
