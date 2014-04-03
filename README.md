@@ -21,7 +21,7 @@ Remove these `connect_signal` calls from `rc.lua`:
 
 Call this function somewhere near the end in rc.lua:
 
-    awesome_sesh.init(client)
+    awesome_sesh.init()
 
 ### Keybindings: ###
 
@@ -52,4 +52,3 @@ TODO
 
 * Add support for saving multiple sessions (restoring complete)
 * Save the screen of marked clients
-* Support for multiple tags

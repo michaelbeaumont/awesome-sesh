@@ -2,6 +2,7 @@ local os = os
 local io = io
 local pairs, assert, tostring, tonumber, table = pairs, assert, tostring, tonumber, table
 
+local client = client
 local awful = require("awful")
 local naughty = require("naughty")
 local beautiful = require("beautiful")
@@ -21,7 +22,7 @@ function writeLn(f, str)
     f:write(str.."\n")
 end
 
-function init(client)
+function init()
     client.connect_signal("focus", function(c)
         if not awful.client.ismarked(c) then
             c.border_color = beautiful.border_focus
