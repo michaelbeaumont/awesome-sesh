@@ -51,4 +51,3 @@ TODO
 ----
 
 * Add support for saving multiple sessions (restoring complete)
-* Save the screen of marked clients
